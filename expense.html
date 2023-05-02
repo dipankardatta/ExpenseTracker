@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+</head>
+
+<body>
+    <form id="expense-form">
+        <label for="expense-name">Name:</label>
+        <input type="text" id="expense-name" required>
+        <label for="expense-amount">Amount:</label>
+        <input type="number" id="expense-amount" required>
+        <button type="submit">Add</button>
+    </form>
+    <ul id="expenses-list"></ul>
+    <div>Total Expense: Rs<span id="total-expense">0.00</span></div>
+    <script>
+        // Load the expenses from local storage
+        let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+
+        // Get the DOM elements
+        const form = document.getElementById('expense-form');
+        const inputName = document.getElementById('expense-name');
+        const inputAmount = document.getElementById('expense-amount');
+        const expensesList = document.getElementById('expenses-list');
+        const totalExpense = document.getElementById('total-expense');
+
+        // Add a new expense to local storage and update the total
+        function addExpense(name, amount) {
+            expenses.push({ name, amount });
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+            updateTotal();
+            renderExpenses();
+        }
+
+        // Remove an expense from local storage and update the total
+        function removeExpense(index) {
+            expenses.splice(index, 1);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+            updateTotal();
+            renderExpenses();
+        }
+
+        // Update the total value of all expenses
+        function updateTotal() {
+            const total = expenses.reduce((acc, cur) => acc + cur.amount, 0);
+            totalExpense.textContent = total.toFixed(2);
+        }
+
+        // Render the list of expenses from local storage to the page
+        function renderExpenses() {
+            expensesList.innerHTML = '';
+            expenses.forEach((expense, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `${expense.name}: Rs${expense.amount.toFixed(2)} <button class="delete" data-index="${index}">X</button>`;
+                expensesList.appendChild(li);
+            });
+        }
+
+        // Handle form submit event
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const name = inputName.value;
+            const amount = parseFloat(inputAmount.value);
+            addExpense(name, amount);
+            inputName.value = '';
+            inputAmount.value = '';
+        });
+
+        // Handle delete button click event
+        expensesList.addEventListener('click', e => {
+            if (e.target.matches('button.delete')) {
+                const index = e.target.dataset.index;
+                removeExpense(index);
+            }
+        });
+
+        // Render the initial list of expenses
+        renderExpenses();
+        updateTotal();
+    </script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+</head>
+
+<body>
+    <form id="expense-form">
+        <label for="expense-name">Name:</label>
+        <input type="text" id="expense-name" required>
+        <label for="expense-amount">Amount:</label>
+        <input type="number" id="expense-amount" required>
+        <button type="submit">Add</button>
+    </form>
+    <ul id="expenses-list"></ul>
+    <div>Total Expense: Rs<span id="total-expense">0.00</span></div>
+    <script>
+        const { Expense } = require('./data/database');
+
+        const form = document.getElementById('expense-form');
+        const inputName = document.getElementById('expense-name');
+        const inputAmount = document.getElementById('expense-amount');
+        const expensesList = document.getElementById('expenses-list');
+        const totalExpense = document.getElementById('total-expense');
+
+        // Add a new expense to the database and update the total
+        async function addExpense(name, amount) {
+            await Expense.create({ name, amount });
+            updateTotal();
+            renderExpenses();
+        }
+
+        // Remove an expense from the database and update the total
+        async function removeExpense(id) {
+            await Expense.destroy({ where: { id } });
+            updateTotal();
+            renderExpenses();
+        }
+
+        // Update the total value of all expenses
+        async function updateTotal() {
+            const expenses = await Expense.findAll();
+            const total = expenses.reduce((acc, cur) => acc + cur.amount, 0);
+            totalExpense.textContent = total.toFixed(2);
+        }
+
+        // Render the list of expenses from the database to the page
+        async function renderExpenses() {
+            expensesList.innerHTML = '';
+            const expenses = await Expense.findAll();
+            expenses.forEach(expense => {
+                const li = document.createElement('li');
+                li.innerHTML = `${expense.name}: $${expense.amount} <button class="delete" data-id="${expense.id}">X</button>`;
+                expensesList.appendChild(li);
+            });
+        }
+
+        // Handle form submit event
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const name = inputName.value;
+            const amount = parseFloat(inputAmount.value);
+            await addExpense(name, amount);
+            inputName.value = '';
+            inputAmount.value = '';
+        });
+
+        // Handle delete button click event
+        expensesList.addEventListener('click', async e => {
+            if (e.target.matches('button.delete')) {
+                const id = e.target.dataset.id;
+                await removeExpense(id);
+            }
+        });
+
+        // Render the initial list of expenses and total
+        renderExpenses();
+        updateTotal();
+
+
+    </script>
+
+
+</body>
+
+</html>
